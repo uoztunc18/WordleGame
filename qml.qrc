@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/Keyboard.qml</file>
+        <file>res/backspaceIcon.png</file>
+        <file>res/allowed_guesses.txt</file>
+    </qresource>
+</RCC>
