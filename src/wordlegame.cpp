@@ -145,12 +145,6 @@ QString WordleGame::getRandomWord() {
 
 bool WordleGame::isGuessValid(QString guess) {
     if (dictionary.contains(guess.toLower())) {
-        m_guessCount++;
-        emit guessCountChanged();
-        if (m_guessCount == 6) {
-            m_isGameOver = true;
-            emit isGameOverChanged();
-        }
         return true;
     } else {
         qDebug() << "Guessed word is not found in dictionary!";
@@ -159,6 +153,12 @@ bool WordleGame::isGuessValid(QString guess) {
 }
 
 QString WordleGame::isGuessCorrect(QString guess) {
+    m_guessCount++;
+    //emit guessCountChanged();
+    if (m_guessCount == 6) {
+        m_isGameOver = true;
+        emit isGameOverChanged();
+    }
     QString colors = "bbbbb";
     QChar currentChar;
 
@@ -205,27 +205,22 @@ QString WordleGame::isGuessCorrect(QString guess) {
         emit wonChanged();
     }
 
-    // qDebug() << m_greenLetters;
-    // qDebug() << m_yellowLetters;
-    // qDebug() << m_checkedLetters;
-
     return colors;
 }
 
 void WordleGame::resetGame() {
-    qDebug() << "hLELOO";
     m_isGameOver = false;
-    emit isGameOverChanged();
     m_won = false;
-    emit wonChanged();
     m_guessCount = 0;
-    emit guessCountChanged();
-    m_targetWord = "";
-    emit targetWordChanged();
+    m_targetWord = getRandomWord();
     m_greenLetters.clear();
-    emit greenLettersChanged();
     m_yellowLetters.clear();
-    emit yellowLettersChanged();
     m_checkedLetters.clear();
+    emit isGameOverChanged();
+    emit wonChanged();
+    emit guessCountChanged();
+    emit targetWordChanged();
+    emit greenLettersChanged();
+    emit yellowLettersChanged();
     emit checkedLettersChanged();
 }

@@ -3,6 +3,19 @@ import QtQuick 2.14
 Column {
     spacing: 9
 
+    function backspaceKeyHandler() {
+        wordInput = wordInput.substring(0, wordInput.length - 1);
+        console.log(wordInput)
+    }
+
+    function letterKeyHandler(keyCode) {
+        if ((keyCode >= "A" && keyCode <= "Z") || (keyCode >= "a" && keyCode <= "z")) {
+            wordInput += keyCode.toUpperCase()
+            console.log(wordInput)
+        }
+    }
+
+    // Coloring of the keyboard
     function getColor(letter) {
         if (classA.greenLetters.indexOf(letter) !== -1) {
             return "#618c55"
@@ -15,35 +28,44 @@ Column {
         }
     }
 
+    function errorHandler(message) {
+        errorPopup.message = message
+        errorPopup.open()
+        if (errorPopupTimer.running) {
+            errorPopupTimer.stop()
+        }
+        errorPopupTimer.start();
+    }
+
+    //Handling the word that is found in word list, to be checked and updating color tables
     function validateGuess(guess) {
-        console.log(guess);
         if (guess.length < 5) {
-            missingLetterPopup.open()
-            missingLetterPopupTimer.start();
-        } else {
-            if (classA.isGuessValid(guess)) {
-                guessList.push(guess);
-                const response = classA.isGuessCorrect(guess);
-                const colors = []
-                for (let i = 0; i<5 ;i++) {
-                    switch (response.charAt(i)) {
-                        case ('b'):
-                            colors.push("#3c3c3c")
-                            break
-                        case ('y'):
-                            colors.push("#b1a04c")
-                            break
-                        default:
-                            colors.push("#618c55")
-                            break
-                    };
+            errorHandler("Not enough letters")
+            return
+        }
+
+        if (classA.isGuessValid(guess)) {
+            wordInput = "";
+            guessList.push(guess);
+            const response = classA.isGuessCorrect(guess);
+            const colors = []
+            for (let i = 0; i<5 ;i++) {
+                switch (response.charAt(i)) {
+                    case ('b'):
+                        colors.push("#3c3c3c")
+                        break
+                    case ('y'):
+                        colors.push("#b1a04c")
+                        break
+                    default:
+                        colors.push("#618c55")
+                        break
                 };
-                guessColors.push(colors)
-                wordInput = "";
-            } else {
-                invalidWordPopup.open()
-                invalidWordPopupTimer.start();
-            }
+            };
+            guessColors.push(colors)
+            classA.guessCountChanged()
+        } else {
+            errorHandler("Not in word list")
         }
     }
 
@@ -54,30 +76,9 @@ Column {
         Repeater {
             model: ["Q","W","E","R","T","Y","U","I","O","P"]
 
-            Rectangle {
-                width: 45
-                height: 60
-                radius: 3
+            Key {
                 color: getColor(modelData)
-
-                property string text: modelData
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData
-                    color: "WHITE"
-                    font.bold: true
-                    font.pixelSize: 20
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        if (wordInput.length < 5) {
-                            wordInput += parent.text
-                        }
-                    }
-                }
+                text: modelData
             }
         }
     }
@@ -90,30 +91,9 @@ Column {
         Repeater {
             model: ["A","S","D","F","G","H","J","K","L"]
 
-            Rectangle {
-                width: 45
-                height: 60
-                radius: 3
+            Key {
                 color: getColor(modelData)
-
-                property string text: modelData
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData
-                    color: "WHITE"
-                    font.bold: true
-                    font.pixelSize: 20
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        if (wordInput.length < 5) {
-                            wordInput += parent.text
-                        }
-                    }
-                }
+                text: modelData
             }
         }
     }
@@ -146,30 +126,9 @@ Column {
         Repeater {
             model: ["Z","X","C","V","B","N","M"]
 
-            Rectangle {
-                width: 45
-                height: 60
-                radius: 3
+            Key {
                 color: getColor(modelData)
-
-                property string text: modelData
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData
-                    color: "WHITE"
-                    font.bold: true
-                    font.pixelSize: 20
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        if (wordInput.length < 5) {
-                            wordInput += parent.text
-                        }
-                    }
-                }
+                text: modelData
             }
         }
 
@@ -190,9 +149,7 @@ Column {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
-                    wordInput = wordInput.substring(0, wordInput.length - 1);
-                }
+                onClicked: backspaceKeyHandler()
             }
         }
     }
@@ -200,20 +157,18 @@ Column {
     Item {
         id: keystrokes
         focus: true
+        enabled: !classA.isGameOver
 
         Keys.onPressed: (event)=> {
                             if (event.key === Qt.Key_Backspace) {
-                                wordInput = wordInput.substring(0, wordInput.length - 1);
+                                backspaceKeyHandler();
+                                event.accepted = true
                                 return;
                             }
 
-                            if (isGuessLengthAllowed) {
-                                const keyCode = event.text;
-                                if ((keyCode >= "A" && keyCode <= "Z") || (keyCode >= "a" && keyCode <= "z")) {
-                                    wordInput += keyCode.toUpperCase()
-                                    event.accepted = true;
-                                    console.log(wordInput)
-                                }
+                            if (wordInput.length < 5) {
+                                letterKeyHandler(event.text)
+                                event.accepted = true
                                 return;
                             }
         }

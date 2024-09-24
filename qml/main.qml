@@ -10,10 +10,33 @@ Window {
     title: qsTr("WorldleGame")
     color: "#131313"
 
-    property var guessList: []
+    // Dynamic string to store current typed letter
     property string wordInput: ""
+    // Keep the guessed and checked words, and their corresponding colors
+    property var guessList: []
     property var guessColors: []
-    property bool isGuessLengthAllowed: wordInput.length < 5
+
+    // Coloring of the letter boxes on the display board
+    function getColor(wordIndex, letterIndex) {
+        if (wordIndex < classA.guessCount) {
+            // GuessCount != 0 => TypeError
+            return guessColors[wordIndex][letterIndex]
+        } else {
+            return "#131313"
+        }
+    }
+
+    // Getting letters of the boxes on the display board
+    function getLetter(wordIndex, letterIndex) {
+        if (wordIndex < classA.guessCount) {
+            // Guesscount != 0 => TypeError
+            return guessList[wordIndex][letterIndex];
+        } else if (wordIndex === classA.guessCount) {
+            return wordInput[letterIndex]
+        } else {
+            return ""
+        }
+    }
 
     Column {
         id: display
@@ -39,31 +62,13 @@ Window {
                     Rectangle {
                         width: 60
                         height: 60
-                        color: {
-                            if (rowIndex < guessColors.length) {
-                                guessColors[rowIndex][index] ? guessColors[rowIndex][index] : "";
-                            } else if (rowIndex === guessColors.length) {
-                                wordInput[index] ? "#131313" : "#131313"
-                            } else {
-                                wordInput[index] ? "#131313" : "#131313"
-                            }
-                        }
-
+                        color: getColor(rowIndex, index)
                         border.color: "#3c3c3c"
                         border.width: 2
 
                         Text {
                             id: letter
-                            text: {
-                                if (rowIndex < guessList.length) {
-                                    guessList[rowIndex][index] ? guessList[rowIndex][index] : "";
-                                } else if (rowIndex === guessList.length) {
-                                    wordInput[index] ? wordInput[index] : ""
-                                } else {
-                                    wordInput[index] ? "" : ""
-                                }
-                            }
-
+                            text: getLetter(rowIndex, index) ? getLetter(rowIndex, index) : ""
                             color: "WHITE"
                             anchors.centerIn: parent
                             font.bold: true
@@ -84,8 +89,9 @@ Window {
         }
     }
 
+    // Popup boxes for corresponding errors
     Popup {
-            id: missingLetterPopup
+            id: errorPopup
             x: parent.width / 2 - width / 2
             y: 50
             width: 120
@@ -97,82 +103,77 @@ Window {
                     radius: 4
             }
 
+            property string message: ""
+
             Text {
                 anchors.centerIn: parent
-                text: "Not enough letters"
+                text: errorPopup.message
                 font.bold: true
                 font.pixelSize: 10
             }
 
             Timer {
-                id: missingLetterPopupTimer
+                id: errorPopupTimer
                 interval: 1000
                 repeat: false
-                onTriggered: missingLetterPopup.close()
+                onTriggered: errorPopup.close()
             }
     }
 
-    Popup {
-            id: invalidWordPopup
-            x: parent.width / 2 - width / 2
-            y: 50
-            width: 120
-            height: 50
-            visible: false
-            modal: true
-            background: Rectangle {
-                    color: "lightgray"
-                    radius: 4
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: "Not in word list"
-                font.bold: true
-                font.pixelSize: 10
-            }
-
-            Timer {
-                id: invalidWordPopupTimer
-                interval: 1000
-                repeat: false
-                onTriggered: invalidWordPopup.close()
-            }
-    }
-
-    /*
+    // Popup box after the game ends
     Popup {
         id: resetPopup
         x: parent.width / 2 - width / 2
         y: 50
-        width: 100
-        height: 50
+        width: 150
+        height: 60
         visible: classA.isGameOver
         modal: false
+        background: Rectangle {
+                color: "lightgray"
+                radius: 4
+        }
 
         Rectangle {
-            width: parent.width/2
+            id: resetButton
+            width: parent.width
             height: parent.height/2
-            anchors.centerIn: parent
-            color: "DARKRED"
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            color: classA.won ? "#618c55" : "DARKRED"
+            border.color: "#999999"
+            border.width: 1
 
             Text {
                 anchors.centerIn: parent
                 text: "Reset"
+                font.bold: true
             }
 
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    // console.log("BEFORE RESET "+classA.guessCount)
+                    guessList = [];
+                    guessColors = [];
                     classA.resetGame();
-                    // console.log("AFTER RESET "+classA.guessCount)
                 }
             }
         }
-    }*/
 
-    /*Rectangle {
+        Text {
+            height: parent.height/2
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: classA.won ? "CONGRATULATIONS!" : "Word is " + classA.targetWord
+            font.bold: true
+        }
+    }
+
+    /*
+
+    TODO: Animation
+
+    Rectangle {
         width: 200
         height: 200
         radius: 3
